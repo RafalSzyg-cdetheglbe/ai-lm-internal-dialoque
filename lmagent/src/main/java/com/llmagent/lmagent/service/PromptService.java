@@ -15,7 +15,9 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.llmagent.lmagent.model.ModelResponse;
+import com.llmagent.lmagent.model.StoryRating;
 import com.llmagent.lmagent.utils.CsvUtlis;
 import com.llmagent.lmagent.utils.SystemPromptMessages;
 
@@ -121,12 +123,6 @@ public class PromptService
 		return buildStoryString(storyBatches);
 	}
 
-	public int rateStory(String story)
-	{
-		return 0;
-	}
-
-
 	public String startRatingPipeline(int numberOfIterations, String model, String systemMessage, String userMessage,
 			double temperature, int maxTokens, boolean stream)
 	{
@@ -159,24 +155,58 @@ public class PromptService
 		return response.getChoices().get(0).getMessage().getContent();
 	}
 
-	public String startIterativeRatingMistralPipeline(final String fake, final String promptMessage, final String modelName,
-			final double temperature)
+	public StoryRating startIterativeRatingMistralPipeline(final String promptMessage, final String modelName,
+			final double temperature, final int iterations, final int maxTokens)
 	{
+		String suggestion = "Make a story"; //starting message
+		StoryRating storyRating = null;
+
 		String userMessage = SystemPromptMessages.MISTRAL_RATING_MESSAGE_WITHOUT_EXPLANATION_WITH_SUGGESTION;
-		ModelResponse pMessage = this.sendPrompt("heBloke/Mistral-7B-Instruct-v0.2-GGUF", "Make me a history",
-				"Tell me story about friendship", 100, 500, false);
 
-		String  spMessage = pMessage.getContent();
+		for(int i = 0; i < iterations; i++)
+		{
+			ModelResponse pMessage = this.sendPrompt(modelName, suggestion, promptMessage, 100, maxTokens, false);
 
-		List<Message> messages = new MessageListBuilder().system(userMessage).user(spMessage).build();
+			String spMessage = pMessage.getContent();
 
-		ChatCompletionRequest request = ChatCompletionRequest.builder().model(modelName).temperature(temperature).messages(
-				messages).safePrompt(false).build();
+			List<Message> messages = new MessageListBuilder().system(userMessage).user(spMessage).build();
 
-		ChatCompletionResponse response = mistralClient.createChatCompletion(request);
+			ChatCompletionRequest request = ChatCompletionRequest.builder().model("mistral-large-latest").temperature(temperature).messages(
+					messages).safePrompt(false).build();
 
-		Message firstChoice = response.getChoices().get(0).getMessage();
-		System.out.println(firstChoice.getRole() + ":\n" + firstChoice.getContent() + "\n");
-		return response.getChoices().get(0).getMessage().getContent();
+			ChatCompletionResponse response = mistralClient.createChatCompletion(request);
+
+			Message firstChoice = response.getChoices().get(0).getMessage();
+			System.out.println(firstChoice.getRole() + ":\n" + firstChoice.getContent() + "\n");
+			storyRating = parseJsonString(firstChoice);
+
+			if(storyRating!=null && storyRating.getSuggestion()!=null){
+				suggestion = storyRating.getSuggestion();
+			}
+		}
+		if(storyRating == null){
+			throw new RuntimeException("Error while parsing the JSON string");
+		}
+
+		return storyRating;
+	}
+
+	private StoryRating parseJsonString(Message stringJson) {
+		String[] lines = stringJson.getContent().split("\n");
+		StringBuilder jsonStringBuilder = new StringBuilder();
+		for (int i = 1; i < lines.length - 1; i++) {
+			jsonStringBuilder.append(lines[i]).append("\n");
+		}
+		String jsonString = jsonStringBuilder.toString().trim();
+
+
+		try {
+			ObjectMapper objectMapper = new ObjectMapper();
+			return objectMapper.readValue(jsonString, StoryRating.class);
+		} catch (Exception e) {
+			System.out.println("Error while parsing the JSON string: " + e.getMessage());
+			e.printStackTrace();
+		}
+		return null;
 	}
 }

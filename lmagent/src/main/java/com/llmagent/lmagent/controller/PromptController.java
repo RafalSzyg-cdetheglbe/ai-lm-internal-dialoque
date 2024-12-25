@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.llmagent.lmagent.model.ModelResponse;
 import com.llmagent.lmagent.model.PromptPayload;
+import com.llmagent.lmagent.model.StoryRating;
 import com.llmagent.lmagent.service.PromptService;
 
 @RestController
@@ -63,9 +64,9 @@ public class PromptController
 	}
 
 	@PostMapping("/startIterativeRatingMistralPipeline")
-	public String startIterativeRatingMistralPipeline(@RequestBody PromptPayload payload)
+	public StoryRating startIterativeRatingMistralPipeline(@RequestBody PromptPayload payload)
 	{
-		return promptService.startIterativeRatingMistralPipeline(payload.getSystemMessage(), payload.getUserMessage(),
-				payload.getModelName(), payload.getTemperature());
+		return promptService.startIterativeRatingMistralPipeline(payload.getUserMessage(),
+				payload.getModelName(), payload.getTemperature(), payload.getNumberOfIterations(), payload.getMaxTokens());
 	}
 }
