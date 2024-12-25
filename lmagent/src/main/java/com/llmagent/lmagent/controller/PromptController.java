@@ -1,10 +1,7 @@
 package com.llmagent.lmagent.controller;
 
-import java.util.Map;
-
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -56,5 +53,19 @@ public class PromptController
 				payload.getTemperature(), //
 				payload.getMaxTokens(), //
 				payload.isStream());
+	}
+
+	@PostMapping("/startRatingMistralPipeline")
+	public String startRatingMistralPipeline(@RequestBody PromptPayload payload)
+	{
+		return promptService.startRatingMistralPipeline(payload.getSystemMessage(), payload.getUserMessage(),
+				payload.getModelName(), payload.getTemperature());
+	}
+
+	@PostMapping("/startIterativeRatingMistralPipeline")
+	public String startIterativeRatingMistralPipeline(@RequestBody PromptPayload payload)
+	{
+		return promptService.startIterativeRatingMistralPipeline(payload.getSystemMessage(), payload.getUserMessage(),
+				payload.getModelName(), payload.getTemperature());
 	}
 }

@@ -17,13 +17,25 @@ import org.springframework.stereotype.Service;
 
 import com.llmagent.lmagent.model.ModelResponse;
 import com.llmagent.lmagent.utils.CsvUtlis;
+import com.llmagent.lmagent.utils.SystemPromptMessages;
+
+import nl.dannyj.mistral.MistralClient;
+import nl.dannyj.mistral.builders.MessageListBuilder;
+import nl.dannyj.mistral.models.completion.ChatCompletionRequest;
+import nl.dannyj.mistral.models.completion.ChatCompletionResponse;
+import nl.dannyj.mistral.models.completion.Message;
 
 @Service
 public class PromptService
 {
-
-
 	private final String LM_STUDIO_SERVER_URL_PROMPT = "http://localhost:8081/v1/chat/completions";
+
+	private final MistralClient mistralClient;
+
+	public PromptService(MistralClient mistralClient)
+	{
+		this.mistralClient = mistralClient;
+	}
 
 	public ModelResponse sendPrompt(String model, String systemMessage, String userMessage, double temperature, int maxTokens,
 			boolean stream)
@@ -89,13 +101,13 @@ public class PromptService
 		return new JSONObject(payload).toString();
 	}
 
-	public String startHistoryMakingPipeline(int numberOfIterations, String model, String systemMessage,
-			String userMessage, double temperature, int maxTokens, boolean stream)
+	public String startHistoryMakingPipeline(int numberOfIterations, String model, String systemMessage, String userMessage,
+			double temperature, int maxTokens, boolean stream)
 	{
 		ModelResponse response = sendPrompt(model, systemMessage, userMessage, temperature, maxTokens, stream);
 
 		List<String> storyBatches = new ArrayList<>();
-		ModelResponse previousResponse=new ModelResponse(userMessage,0);
+		ModelResponse previousResponse = new ModelResponse(userMessage, 0);
 		storyBatches.add(response.getContent());
 		for (int i = 0; i < numberOfIterations; i++)
 		{
@@ -115,8 +127,8 @@ public class PromptService
 	}
 
 
-	public String startRatingPipeline(int numberOfIterations, String model, String systemMessage,
-			String userMessage, double temperature, int maxTokens, boolean stream)
+	public String startRatingPipeline(int numberOfIterations, String model, String systemMessage, String userMessage,
+			double temperature, int maxTokens, boolean stream)
 	{
 		return String.valueOf('x');
 	}
@@ -131,5 +143,40 @@ public class PromptService
 		}
 		CsvUtlis.saveStringToCsv(story.toString(), "story.csv");
 		return story.toString();
+	}
+
+	public String startRatingMistralPipeline(String userMessage, String promptMessage, String model, double temperature)
+	{
+		List<Message> messages = new MessageListBuilder().system(userMessage).user(promptMessage).build();
+
+		ChatCompletionRequest request = ChatCompletionRequest.builder().model(model).temperature(temperature).messages(messages)
+				.safePrompt(false).build();
+
+		ChatCompletionResponse response = mistralClient.createChatCompletion(request);
+
+		Message firstChoice = response.getChoices().get(0).getMessage();
+		System.out.println(firstChoice.getRole() + ":\n" + firstChoice.getContent() + "\n");
+		return response.getChoices().get(0).getMessage().getContent();
+	}
+
+	public String startIterativeRatingMistralPipeline(final String fake, final String promptMessage, final String modelName,
+			final double temperature)
+	{
+		String userMessage = SystemPromptMessages.MISTRAL_RATING_MESSAGE_WITHOUT_EXPLANATION_WITH_SUGGESTION;
+		ModelResponse pMessage = this.sendPrompt("heBloke/Mistral-7B-Instruct-v0.2-GGUF", "Make me a history",
+				"Tell me story about friendship", 100, 500, false);
+
+		String  spMessage = pMessage.getContent();
+
+		List<Message> messages = new MessageListBuilder().system(userMessage).user(spMessage).build();
+
+		ChatCompletionRequest request = ChatCompletionRequest.builder().model(modelName).temperature(temperature).messages(
+				messages).safePrompt(false).build();
+
+		ChatCompletionResponse response = mistralClient.createChatCompletion(request);
+
+		Message firstChoice = response.getChoices().get(0).getMessage();
+		System.out.println(firstChoice.getRole() + ":\n" + firstChoice.getContent() + "\n");
+		return response.getChoices().get(0).getMessage().getContent();
 	}
 }
