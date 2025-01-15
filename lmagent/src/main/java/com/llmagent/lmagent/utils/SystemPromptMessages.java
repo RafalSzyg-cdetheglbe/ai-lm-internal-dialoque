@@ -4,7 +4,7 @@ public class SystemPromptMessages
 {
 	final static public String MISTRAL_RATING_MESSAGE = """
 			{
-			    "prompt": "Rate the given story on a scale of 1-10 for the following aspects: cohesion, number of mistakes, text length, emotion, and engagement. Provide your response in the following JSON format:
+			    "prompt": "Rate the given story on a scale of 1-100 for the following aspects: cohesion, number of mistakes, text length, emotion, and engagement. Provide your response in the following JSON format:
 			    {
 			        "cohesion": <rating (1-10)>,
 			        "mistakes": <rating (1-10)>,
@@ -24,11 +24,11 @@ public class SystemPromptMessages
 
 	final static public String MISTRAL_RATING_MESSAGE_WITHOUT_EXPLANATION_WITH_SUGGESTION = """
 
-			    Rate the given story on a scale of 1-10 for the following aspects: cohesion, number of mistakes, text length, emotion, and engagement. Also provide sugestion for making it better. Provide your response in the following JSON format:
+			    Rate the given story on a scale of 1-10 for the following aspects: cohesion, mistakes, characters, emotion, and engagement. Also provide sugestion for making it better. Provide your response in the following JSON format:
 			    {
 			        "cohesion": <rating (1-10)>,
 			        "mistakes": <rating (1-10)>,
-			        "text_length": <rating (1-10)>,
+			        "characters": <rating (1-10)>,
 			        "emotion": <rating (1-10)>,
 			        "engagement": <rating (1-10)>
 			        "suggestion": <suggestion>

@@ -1,6 +1,5 @@
 package com.llmagent.lmagent.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -67,6 +66,13 @@ public class PromptController
 	public StoryRating startIterativeRatingMistralPipeline(@RequestBody PromptPayload payload)
 	{
 		return promptService.startIterativeRatingMistralPipeline(payload.getUserMessage(),
+				payload.getModelName(), payload.getTemperature(), payload.getNumberOfIterations(), payload.getMaxTokens());
+	}
+
+	@PostMapping("/startIterativeRatingOnlyMistralPipeline")
+	public StoryRating startIterativeRatingOnlyMistralPipeline(@RequestBody PromptPayload payload)
+	{
+		return promptService.startIterativeRatingOnlyMistralPipeline(payload.getUserMessage(),
 				payload.getModelName(), payload.getTemperature(), payload.getNumberOfIterations(), payload.getMaxTokens());
 	}
 }

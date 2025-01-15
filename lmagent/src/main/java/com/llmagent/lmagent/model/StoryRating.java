@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 public class StoryRating {
 	private int cohesion;
 	private int mistakes;
-	private int textLength;
+	private int characters;
 	private int emotion;
 	private int engagement;
 	private String suggestion;
@@ -27,12 +27,12 @@ public class StoryRating {
 		this.mistakes = mistakes;
 	}
 
-	public int getTextLength() {
-		return textLength;
+	public int getCharacters() {
+		return characters;
 	}
 
-	public void setTextLength(int textLength) {
-		this.textLength = textLength;
+	public void setCharacters(int textLength) {
+		this.characters = textLength;
 	}
 
 	public int getEmotion() {
@@ -64,7 +64,7 @@ public class StoryRating {
 		return "StoryRating{" +
 				"cohesion=" + cohesion +
 				", mistakes=" + mistakes +
-				", textLength=" + textLength +
+				", textLength=" + characters +
 				", emotion=" + emotion +
 				", engagement=" + engagement +
 				", suggestion='" + suggestion + '\'' +

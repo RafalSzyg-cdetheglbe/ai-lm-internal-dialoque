@@ -3,6 +3,9 @@ package com.llmagent.lmagent.utils;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.rmi.server.UID;
+
+import com.llmagent.lmagent.model.StoryRating;
 
 
 public class CsvUtlis
@@ -48,5 +51,37 @@ public class CsvUtlis
 			return '"' + text + '"';
 		}
 		return text;
+	}
+
+	public static void saveRatingToCSV(StoryRating storyRating, int i) {
+		// Define the CSV file path
+		String csvFilePath = "testMistralExternal.csv";
+
+		try {
+			// Check if the file exists
+			File csvFile = new File(csvFilePath);
+			boolean isFileNew = !csvFile.exists();
+
+			// Open the file in append mode
+			try (FileWriter writer = new FileWriter(csvFilePath, true)) {
+				// If the file is new, write the header first
+				if (isFileNew) {
+					writer.write("Id,Cohesion,Mistakes,Characters,Emotion,Engagement\n");
+				}
+
+				// Write the ratings data as a new row
+				writer.write(String.format("%d,%d,%d,%d,%d,%d\n",
+						i,
+						storyRating.getCohesion(),
+						storyRating.getMistakes(),
+						storyRating.getCharacters(),
+						storyRating.getEmotion(),
+						storyRating.getEngagement()
+				));
+			}
+		} catch (IOException e) {
+			System.out.println("Error while writing to the CSV file: " + e.getMessage());
+			e.printStackTrace();
+		}
 	}
 }

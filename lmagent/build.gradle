@@ -14,13 +14,14 @@ java {
 }
 
 repositories {
+	mavenLocal()
 	mavenCentral()
-	maven { url 'https://jitpack.io' }
+	//maven { url 'https://jitpack.io' }
 }
 
 dependencies {
 
-	implementation 'com.github.Dannyj1:mistral-java-client:1.0.1'
+	implementation 'nl.dannyj:mistral-java-client:1.0.2-timeoutfix'
 
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
