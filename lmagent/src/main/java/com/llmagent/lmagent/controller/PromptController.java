@@ -66,13 +66,13 @@ public class PromptController
 	public StoryRating startIterativeRatingMistralPipeline(@RequestBody PromptPayload payload)
 	{
 		return promptService.startIterativeRatingMistralPipeline(payload.getUserMessage(),
-				payload.getModelName(), payload.getTemperature(), payload.getNumberOfIterations(), payload.getMaxTokens());
+				payload.getModelName(), payload.getTemperature(), payload.getNumberOfIterations(), payload.getMaxTokens(), payload.getFileName());
 	}
 
 	@PostMapping("/startIterativeRatingOnlyMistralPipeline")
 	public StoryRating startIterativeRatingOnlyMistralPipeline(@RequestBody PromptPayload payload)
 	{
 		return promptService.startIterativeRatingOnlyMistralPipeline(payload.getUserMessage(),
-				payload.getModelName(), payload.getTemperature(), payload.getNumberOfIterations(), payload.getMaxTokens());
+				payload.getModelName(), payload.getTemperature(), payload.getNumberOfIterations(), payload.getMaxTokens(), payload.getSystemMessage(), payload.getFileName());
 	}
 }

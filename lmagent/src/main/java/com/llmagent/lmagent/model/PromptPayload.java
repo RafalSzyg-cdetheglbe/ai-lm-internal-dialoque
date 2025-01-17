@@ -8,6 +8,7 @@ public class PromptPayload {
 	private double temperature;
 	private int maxTokens;
 	private boolean stream;
+	private String fileName;
 
 	// Getters and Setters
 	public int getNumberOfIterations() {
@@ -64,5 +65,10 @@ public class PromptPayload {
 
 	public void setStream(boolean stream) {
 		this.stream = stream;
+	}
+
+	public String getFileName()
+	{
+		return fileName;
 	}
 }

@@ -3,7 +3,6 @@ package com.llmagent.lmagent.utils;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.rmi.server.UID;
 
 import com.llmagent.lmagent.model.StoryRating;
 
@@ -18,19 +17,19 @@ public class CsvUtlis
 	 * @param text       The string to be saved.
 	 * @param filePath   The path of the CSV file to save the data.
 	 */
-	public static void saveStringToCsv(String text, String filePath) {
+	public static void saveStringToCsv(String text, String filePath, int id) {
 		File csvFile = new File(filePath);
 		boolean fileExists = csvFile.exists();
 
 		try (FileWriter writer = new FileWriter(filePath, true)) {
 			// If the file does not exist, write the header row.
 			if (!fileExists) {
-				writer.append("Generated Text,Rating\n");
+				writer.append("Generated Text,ID\n");
 			}
 
-			// Write the content row.
 			writer.append(escapeCsv(text))
-					.append(",")  // Empty column for Rating.
+					.append(",")
+					.append(String.valueOf(id))
 					.append("\n");
 
 			System.out.println("CSV file updated successfully at: " + filePath);
@@ -38,6 +37,7 @@ public class CsvUtlis
 			System.err.println("Error while writing to the CSV file: " + e.getMessage());
 		}
 	}
+
 
 	/**
 	 * Escapes special characters in the text for CSV compatibility.
@@ -53,18 +53,13 @@ public class CsvUtlis
 		return text;
 	}
 
-	public static void saveRatingToCSV(StoryRating storyRating, int i) {
-		// Define the CSV file path
-		String csvFilePath = "testMistralExternal.csv";
+	public static void saveRatingToCSV(StoryRating storyRating, int i, String fileName) {
 
 		try {
-			// Check if the file exists
-			File csvFile = new File(csvFilePath);
+			File csvFile = new File(fileName+"rating");
 			boolean isFileNew = !csvFile.exists();
 
-			// Open the file in append mode
-			try (FileWriter writer = new FileWriter(csvFilePath, true)) {
-				// If the file is new, write the header first
+			try (FileWriter writer = new FileWriter(fileName+"rating", true)) {
 				if (isFileNew) {
 					writer.write("Id,Cohesion,Mistakes,Characters,Emotion,Engagement\n");
 				}

@@ -24,7 +24,7 @@ public class SystemPromptMessages
 
 	final static public String MISTRAL_RATING_MESSAGE_WITHOUT_EXPLANATION_WITH_SUGGESTION = """
 
-			    Rate the given story on a scale of 1-10 for the following aspects: cohesion, mistakes, characters, emotion, and engagement. Also provide sugestion for making it better. Provide your response in the following JSON format:
+			    Rate the given story on a scale of 1-10 for the following aspects: cohesion, mistakes, characters, emotion, and engagement. Also provide sugestion for making it better. Response only using json. Provide your response in the following JSON format:
 			    {
 			        "cohesion": <rating (1-10)>,
 			        "mistakes": <rating (1-10)>,
