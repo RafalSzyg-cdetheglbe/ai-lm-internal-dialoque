@@ -17,9 +17,11 @@ import org.json.JSONObject;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.llmagent.lmagent.model.AnswerEvaluation;
 import com.llmagent.lmagent.model.ModelResponse;
 import com.llmagent.lmagent.model.StoryRating;
 import com.llmagent.lmagent.utils.CsvUtlis;
+import com.llmagent.lmagent.utils.QuestionCategories;
 import com.llmagent.lmagent.utils.SystemPromptMessages;
 
 import nl.dannyj.mistral.MistralClient;
@@ -122,7 +124,7 @@ public class PromptService
 			previousResponse.setContent(modelResponse.getContent());
 			storyBatches.add(modelResponse.getContent());
 		}
-		return buildStoryString(storyBatches,0);
+		return buildStoryString(storyBatches, 0);
 	}
 
 	public String startRatingPipeline(int numberOfIterations, String model, String systemMessage, String userMessage,
@@ -139,7 +141,7 @@ public class PromptService
 			story.append(batch);
 			story.append("\n");
 		}
-		CsvUtlis.saveStringToCsv(story.toString(), "story.csv",id);
+		CsvUtlis.saveStringToCsv(story.toString(), "story.csv", id);
 		return story.toString();
 	}
 
@@ -191,11 +193,14 @@ public class PromptService
 			System.out.println(firstChoice.getRole() + ":\n" + firstChoice.getContent() + "\n");
 			storyRating = parseJsonString(firstChoice);
 			CsvUtlis.saveRatingToCSV(storyRating, i, fileName);
-			promptMessage = "You should correct this text to make it better: " + spMessage;
+
+			//for control tests disabled
+			//promptMessage = "You should correct this text to make it better: " + spMessage;
 
 			if (storyRating != null && storyRating.getSuggestion() != null)
 			{
-				suggestion = storyRating.getSuggestion();
+				//for controll tests disabled
+				//suggestion = storyRating.getSuggestion();
 			}
 		}
 		if (storyRating == null)
@@ -229,22 +234,57 @@ public class PromptService
 		return null;
 	}
 
+	private AnswerEvaluation parseAnswerEvaluationJsonString(Message stringJson) {
+		String content = stringJson.getContent().trim();
+		String jsonString;
+
+		// Handle '''json and ''' markers if present
+		if (content.startsWith("```json") && content.endsWith("```")) {
+			// Extract the JSON between the markers
+			content = content.substring(7, content.length() - 3).trim();
+		}
+
+		// Build the JSON string from the content
+		if (content.startsWith("{") && content.endsWith("}")) {
+			// Direct JSON content without extra parsing
+			jsonString = content;
+		} else {
+			// Handle multi-line JSON content
+			String[] lines = content.split("\n");
+			StringBuilder jsonStringBuilder = new StringBuilder();
+			for (String line : lines) {
+				jsonStringBuilder.append(line).append("\n");
+			}
+			jsonString = jsonStringBuilder.toString().trim();
+		}
+
+		try {
+			// Parse JSON into the AnswerEvaluation object
+			ObjectMapper objectMapper = new ObjectMapper();
+			return objectMapper.readValue(jsonString, AnswerEvaluation.class);
+		} catch (Exception e) {
+			System.out.println("Error while parsing the JSON string: " + e.getMessage());
+			e.printStackTrace();
+		}
+
+		return null;
+	}
+
 
 	public StoryRating startIterativeRatingOnlyMistralPipeline(String promptMessage, final String modelName,
-			final double temperature, final int iterations, final int maxTokens, String suggestion, String fileName) {
+			final double temperature, final int iterations, final int maxTokens, String suggestion, String fileName)
+	{
 		//String suggestion = "Make a coherent story"; //starting message
 		StoryRating storyRating = null;
 		String systemPredefinedMessageToRate = SystemPromptMessages.MISTRAL_RATING_MESSAGE_WITHOUT_EXPLANATION_WITH_SUGGESTION;
 
-		for (int i = 0; i < iterations; i++) {
-			try {
+		for (int i = 0; i < iterations; i++)
+		{
+			try
+			{
 				List<Message> storyMakingMessages = new MessageListBuilder().system(suggestion).user(promptMessage).build();
-				ChatCompletionRequest storyRequest = ChatCompletionRequest.builder()
-						.model("mistral-large-latest")
-						.temperature(temperature)
-						.messages(storyMakingMessages)
-						.safePrompt(false)
-						.build();
+				ChatCompletionRequest storyRequest = ChatCompletionRequest.builder().model("mistral-large-latest").temperature(
+						temperature).messages(storyMakingMessages).safePrompt(false).build();
 
 				ChatCompletionResponse storyResponse = sendRequestWithRetry(storyRequest, 10); // Retry logic here
 				Message storyMessageResponse = storyResponse.getChoices().get(0).getMessage();
@@ -252,14 +292,10 @@ public class PromptService
 
 				CsvUtlis.saveStringToCsv(storyMessageResponse.getContent(), fileName, i);
 
-				List<Message> ratingMessages = new MessageListBuilder().system(systemPredefinedMessageToRate)
-						.user(storyMessageResponse.getContent()).build();
-				ChatCompletionRequest ratingRequest = ChatCompletionRequest.builder()
-						.model("mistral-large-latest")
-						.temperature(temperature)
-						.messages(ratingMessages)
-						.safePrompt(false)
-						.build();
+				List<Message> ratingMessages = new MessageListBuilder().system(systemPredefinedMessageToRate).user(
+						storyMessageResponse.getContent()).build();
+				ChatCompletionRequest ratingRequest = ChatCompletionRequest.builder().model("mistral-large-latest").temperature(
+						temperature).messages(ratingMessages).safePrompt(false).build();
 
 				ChatCompletionResponse response = sendRequestWithRetry(ratingRequest, 10); // Retry logic here
 				Message firstChoice = response.getChoices().get(0).getMessage();
@@ -267,21 +303,27 @@ public class PromptService
 
 				storyRating = parseJsonString(firstChoice);
 				CsvUtlis.saveRatingToCSV(storyRating, i, fileName);
-				promptMessage = "Correct this text with suggestion given, and reply only with corrected text: " + storyMessageResponse.getContent();
+				promptMessage =
+						"Correct this text with suggestion given, and reply only with corrected text: " + storyMessageResponse.getContent();
 
-				if (storyRating != null && storyRating.getSuggestion() != null) {
+				if (storyRating != null && storyRating.getSuggestion() != null)
+				{
 					suggestion = storyRating.getSuggestion();
 				}
-			} catch (Exception e) {
+			}
+			catch (Exception e)
+			{
 				System.err.println("Error during iteration " + i + ": " + e.getMessage());
-				if (storyRating == null) {
-					i=i-1;
+				if (storyRating == null)
+				{
+					i = i - 1;
 				}
-					//throw new RuntimeException("Error while parsing the JSON string");
+				//throw new RuntimeException("Error while parsing the JSON string");
 			}
 		}
 
-		if (storyRating == null) {
+		if (storyRating == null)
+		{
 			throw new RuntimeException("Error while parsing the JSON string");
 		}
 
@@ -289,17 +331,110 @@ public class PromptService
 	}
 
 
+	public void startAnwseringIterations(String modelname, Double temperature, int iterations, int maxTokens)
+	{
+		List<String> logicQuestions = QuestionCategories.logicQuestions;
+		List<String> generalKnowledgeQuestions = QuestionCategories.generalKnowledgeQuestions;
+		List<String> philosophyQuestions = QuestionCategories.philosophyQuestions;
+		List<String> textInterpretationQuestions = QuestionCategories.textInterpretationQuestions;
 
-	private ChatCompletionResponse sendRequestWithRetry(ChatCompletionRequest request, int retries) {
-		for (int i = 0; i < retries; i++) {
-			try {
+		for (int i = 0; i < generalKnowledgeQuestions.size(); i++)
+		{
+			startAnswerRating(modelname, "General Knowledge", generalKnowledgeQuestions.get(i), i + 1, temperature, iterations,
+					maxTokens);
+		}
+
+		// Logic
+		for (int i = 0; i < logicQuestions.size(); i++)
+		{
+			startAnswerRating(modelname, "Logic", logicQuestions.get(i), i + 1, temperature, iterations, maxTokens);
+		}
+
+		// Text Interpretation
+		for (int i = 0; i < textInterpretationQuestions.size(); i++)
+		{
+			startAnswerRating(modelname, "Text Interpretation", textInterpretationQuestions.get(i), i + 1, temperature,
+					iterations, maxTokens);
+		}
+
+		// Philosophy
+		for (int i = 0; i < philosophyQuestions.size(); i++)
+		{
+			startAnswerRating(modelname, "Philosophy", philosophyQuestions.get(i), i + 1, temperature, iterations, maxTokens);
+		}
+	}
+
+	public void startAnswerRating(final String modelName, String category, String question, int questionNumber,
+			final double temperature, final int iterations, final int maxTokens)
+	{
+		String promptMessage = question;
+		String suggestion = "Answer the question"; //starting message
+		AnswerEvaluation answerEvaluation = null;
+
+		String userMessage = SystemPromptMessages.ANWSER_EVALUATION_WITHSUGGESTION;
+
+		for (int i = 0; i < iterations; i++)
+		{
+			//send message to local model
+			ModelResponse pMessage = this.sendPrompt(modelName, suggestion, promptMessage, 0.7, maxTokens, false);
+
+			//get message
+			String spMessage = pMessage.getContent();
+
+			CsvUtlis.saveStringToCsv(spMessage, category + questionNumber, i);
+
+			//build rating message
+			List<Message> messages =
+					new MessageListBuilder().system(userMessage + "The question is: " + question).user(spMessage)
+					.build();
+
+			//build request
+			ChatCompletionRequest request =
+					ChatCompletionRequest.builder().model("mistral-large-latest").temperature(temperature)
+					.messages(messages).safePrompt(false).build();
+
+			//send request to mistral
+			ChatCompletionResponse response = mistralClient.createChatCompletion(request);
+
+			Message firstChoice = response.getChoices().get(0).getMessage();
+			System.out.println(firstChoice.getRole() + ":\n" + firstChoice.getContent() + "\n");
+			answerEvaluation = parseAnswerEvaluationJsonString(firstChoice);
+			if (answerEvaluation == null)
+			{
+				continue;
+			}
+			CsvUtlis.saveRatingToCSV(answerEvaluation, i, category + questionNumber);
+
+			promptMessage = "You should correct this answer to make it better: " + spMessage;
+
+			if (answerEvaluation != null && answerEvaluation.getSuggestion() != null)
+			{
+				suggestion = answerEvaluation.getSuggestion();
+			}
+		}
+		if (answerEvaluation == null)
+		{
+			throw new RuntimeException("Error while parsing the JSON string");
+		}
+	}
+
+	private ChatCompletionResponse sendRequestWithRetry(ChatCompletionRequest request, int retries)
+	{
+		for (int i = 0; i < retries; i++)
+		{
+			try
+			{
 				return mistralClient.createChatCompletion(request);
-			} catch (MistralAPIException e) {
-				if (i == retries - 1) throw e;
+			}
+			catch (MistralAPIException e)
+			{
+				if (i == retries - 1)
+				{
+					throw e;
+				}
 				System.out.println("Retrying... Attempt: " + (i + 1));
 			}
 		}
 		return null;
 	}
-
 }

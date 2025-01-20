@@ -34,4 +34,20 @@ public class SystemPromptMessages
 			        "suggestion": <suggestion>
 			    }
 			""";
+
+	final static public String ANWSER_EVALUATION_WITHSUGGESTION = """
+			{
+			    "prompt": "Rate the given answer on a scale of 1-10 for the following aspects: truthfulness, development, relevance to topic. Also provide a suggestion for improvement. Provide your response in the following JSON format and use ONLY JSON TO ANSWER:
+			    {
+			        "truthfulness": <rating (1-10)>,
+			        "development": <rating (1-10)>,
+			        "relevanceToTopic": <rating (1-10)>,
+			        "suggestion": <suggestion>
+			    }
+			    Ensure your ratings are well-reasoned, considering the following:
+			    - Truthfulness: How accurate and honest is the answer?
+			    - Development: How well is the answer developed and supported?
+			    - Relevance to Topic: How well does the answer address the topic or question?
+			}
+			""";
 }

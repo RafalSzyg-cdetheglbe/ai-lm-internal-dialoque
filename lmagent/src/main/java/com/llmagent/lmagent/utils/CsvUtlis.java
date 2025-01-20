@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
+import com.llmagent.lmagent.model.AnswerEvaluation;
 import com.llmagent.lmagent.model.StoryRating;
 
 
@@ -72,6 +73,31 @@ public class CsvUtlis
 						storyRating.getCharacters(),
 						storyRating.getEmotion(),
 						storyRating.getEngagement()
+				));
+			}
+		} catch (IOException e) {
+			System.out.println("Error while writing to the CSV file: " + e.getMessage());
+			e.printStackTrace();
+		}
+	}
+
+	public static void saveRatingToCSV(AnswerEvaluation evaluation, int i, String fileName) {
+
+		try {
+			File csvFile = new File(fileName+"rating.csv");
+			boolean isFileNew = !csvFile.exists();
+
+			try (FileWriter writer = new FileWriter(fileName+"rating.csv", true)) {
+				if (isFileNew) {
+					writer.write("Id,Truthfulness,Development,Relevance\n");
+				}
+
+				// Write the ratings data as a new row
+				writer.write(String.format("%d,%d,%d,%d\n",
+						i,
+						evaluation.getTruthfulness(),
+						evaluation.getDevelopment(),
+						evaluation.getRelevanceToTopic()
 				));
 			}
 		} catch (IOException e) {

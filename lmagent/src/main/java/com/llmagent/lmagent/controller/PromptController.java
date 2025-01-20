@@ -1,5 +1,6 @@
 package com.llmagent.lmagent.controller;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -75,4 +76,13 @@ public class PromptController
 		return promptService.startIterativeRatingOnlyMistralPipeline(payload.getUserMessage(),
 				payload.getModelName(), payload.getTemperature(), payload.getNumberOfIterations(), payload.getMaxTokens(), payload.getSystemMessage(), payload.getFileName());
 	}
+
+	@PostMapping("/startAnsweringPipeline")
+	public HttpStatus startAnsweringRating(@RequestBody PromptPayload payload)
+	{
+		promptService.startAnwseringIterations(payload.getModelName(), payload.getTemperature(), payload.getNumberOfIterations(),
+				payload.getMaxTokens());
+		return HttpStatus.OK;
+	}
+
 }
